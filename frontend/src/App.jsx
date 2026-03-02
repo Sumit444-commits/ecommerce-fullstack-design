@@ -36,6 +36,7 @@ import Home from './pages/Home/Home';
 import PageWrapper from './pages/Products/PageWrapper'; 
 import ProductPageWrapper from './pages/Product/ProductPageWrapper';
 import CartPageWrapper from './pages/Cart/CartPageWrapper';
+import AuthPage from './pages/Auth/AuthPage';
 
 const App = () => {
   return (
@@ -51,6 +52,7 @@ const App = () => {
             <Route path="/products" element={<PageWrapper />} />
             <Route path="/product/:id" element={<ProductPageWrapper />} />
             <Route path="/cart" element={<CartPageWrapper />} />
+            <Route path="/auth" element={<AuthPage />} />
           </Routes>
         </main>
 
