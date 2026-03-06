@@ -1,29 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  Check, 
-  Star, 
-  MessageSquare, 
-  ShoppingBag, 
-  Globe, 
-  ShieldCheck, 
-  Heart 
-} from 'lucide-react';
+import { Check, Star, MessageSquare, ShoppingBag, Globe, ShieldCheck, Heart } from 'lucide-react';
 
-const ProductDetail = () => {
-  // --- Functional State ---
+const ProductDetail = ({ product }) => {
   const [activeImage, setActiveImage] = useState(0);
   const [isSaved, setIsSaved] = useState(false);
 
-  // --- Mock Data ---
-  // Replace these URLs with your actual product images
-  const images = [
-    '/images/cloth/1.svg', // Main gray shirt
-    '/images/cloth/2.svg', // White shirt
-    '/images/cloth/1.svg', // Folded shirt
-    '/images/cloth/1.svg', // Model wearing shirt
-    '/images/cloth/1.svg', // Back of shirt
-    '/images/cloth/1.svg', // Detail shot
-  ];
+  // Fallback image in case DB array is empty
+  const images = product?.images?.length > 0 
+    ? product.images 
+    : ['/images/placeholder.svg'];
 
   return (
     <div className="w-full max-w-7xl mx-auto py-4 font-sans text-gray-800">
@@ -31,16 +16,14 @@ const ProductDetail = () => {
         
         {/* --- Column 1: Image Gallery --- */}
         <div className="w-full lg:w-[350px] shrink-0 flex flex-col">
-          {/* Main Image View */}
           <div className="border border-gray-200 rounded-md p-4 flex items-center justify-center aspect-square mb-4 bg-white relative">
             <img 
               src={images[activeImage]} 
-              alt="Product" 
+              alt={product?.title} 
               className="max-w-full max-h-full object-contain mix-blend-multiply"
             />
           </div>
           
-          {/* Thumbnails */}
           <div className="flex gap-2 overflow-x-auto pb-2">
             {images.map((img, idx) => (
               <button
@@ -59,75 +42,83 @@ const ProductDetail = () => {
         {/* --- Column 2: Product Info --- */}
         <div className="flex-1 flex flex-col">
           
-          {/* Stock & Title */}
           <div className="flex items-center text-green-600 text-sm font-medium mb-1">
             <Check className="w-4 h-4 mr-1" strokeWidth={3} />
-            In stock
+            {product?.inStock ? 'In stock' : 'Out of stock'}
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-3 leading-snug">
-            Mens Long Sleeve T-shirt Cotton Base Layer Slim Muscle
+            {product?.title}
           </h1>
           
-          {/* Ratings & Reviews */}
           <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500 mb-4">
             <div className="flex items-center gap-1 text-[#FF9017]">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4" fill={i < 4 ? "currentColor" : "none"} />
+                  <Star key={i} className="w-4 h-4" fill={i < Math.round(product?.rating/2 || 0) ? "currentColor" : "none"} />
                 ))}
               </div>
-              <span className="font-semibold">9.3</span>
+              <span className="font-semibold">{product?.rating || "0.0"}</span>
             </div>
             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <div className="flex items-center gap-1">
               <MessageSquare className="w-4 h-4 text-gray-400" />
-              32 reviews
+              {product?.reviewCount || 0} reviews
             </div>
             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
             <div className="flex items-center gap-1">
               <ShoppingBag className="w-4 h-4 text-gray-400" />
-              154 sold
+              {product?.orders || 0} sold
             </div>
           </div>
 
-          {/* Pricing Box */}
-          <div className="bg-[#fff0e5] flex items-center divide-x divide-orange-200 mb-6 w-full lg:w-[90%]">
-            <div className="p-3 flex-1">
-              <div className="text-red-500 font-bold text-xl leading-none mb-1">$98.00</div>
-              <div className="text-gray-500 text-xs">50-100 pcs</div>
+          {/* Dynamic Tiered Pricing Box */}
+          {product?.tieredPricing && product.tieredPricing.length > 0 ? (
+            <div className="bg-[#fff0e5] flex items-center divide-x divide-orange-200 mb-6 w-full lg:w-[90%]">
+              {product.tieredPricing.map((tier, idx) => (
+                <div key={idx} className="p-3 flex-1">
+                  <div className={`font-bold text-xl leading-none mb-1 ${idx === 0 ? 'text-red-500' : 'text-gray-800'}`}>
+                    ${tier.price.toFixed(2)}
+                  </div>
+                  <div className="text-gray-500 text-xs">
+                    {tier.maxQty ? `${tier.minQty}-${tier.maxQty} pcs` : `${tier.minQty}+ pcs`}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="p-3 flex-1">
-              <div className="text-gray-800 font-bold text-xl leading-none mb-1">$90.00</div>
-              <div className="text-gray-500 text-xs">100-700 pcs</div>
+          ) : (
+            <div className="mb-6">
+              <span className="text-red-500 font-bold text-3xl">${product?.price?.toFixed(2)}</span>
             </div>
-            <div className="p-3 flex-1">
-              <div className="text-gray-800 font-bold text-xl leading-none mb-1">$78.00</div>
-              <div className="text-gray-500 text-xs">700+ pcs</div>
-            </div>
-          </div>
+          )}
 
-          {/* Specifications Table */}
+          {/* Specifications Table (Short Info) */}
           <div className="grid grid-cols-[110px_1fr] gap-y-4 text-sm text-gray-600 w-full lg:w-[90%] border-b border-gray-200 pb-6 mb-4">
-            <div className="text-gray-400">Price:</div>
-            <div>Negotiable</div>
+            <div className="text-gray-400">Condition:</div>
+            <div>{product?.condition || 'N/A'}</div>
             
-            <div className="text-gray-400">Type:</div>
-            <div>Classic shoes</div>
-            
-            <div className="text-gray-400">Material:</div>
-            <div>Plastic material</div>
-            
-            <div className="text-gray-400">Design:</div>
-            <div>Modern nice</div>
+            <div className="text-gray-400">Brand:</div>
+            <div>{product?.brand || 'N/A'}</div>
 
-            <div className="text-gray-400 pt-2">Customization:</div>
-            <div className="pt-2">Customized logo and<br/>design custom packages</div>
+            {product?.policies?.customization && (
+              <>
+                <div className="text-gray-400 pt-2">Customization:</div>
+                <div className="pt-2">{product.policies.customization}</div>
+              </>
+            )}
 
-            <div className="text-gray-400">Protection:</div>
-            <div>Refund Policy</div>
+            {product?.policies?.protection && (
+              <>
+                <div className="text-gray-400">Protection:</div>
+                <div>{product.policies.protection}</div>
+              </>
+            )}
 
-            <div className="text-gray-400">Warranty:</div>
-            <div>2 years full warranty</div>
+            {product?.policies?.warranty && (
+              <>
+                <div className="text-gray-400">Warranty:</div>
+                <div>{product.policies.warranty}</div>
+              </>
+            )}
           </div>
         </div>
 
@@ -135,34 +126,40 @@ const ProductDetail = () => {
         <div className="w-full lg:w-[280px] shrink-0">
           <div className="border border-gray-200 rounded-lg p-4 shadow-sm bg-white flex flex-col">
             
-            {/* Supplier Header */}
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
-              <div className="w-12 h-12 bg-[#c6f0e9] text-[#2ba08a] font-bold text-xl flex items-center justify-center rounded-md shrink-0">
-                R
+              <div className="w-12 h-12 bg-[#c6f0e9] text-[#2ba08a] font-bold text-xl flex items-center justify-center rounded-md shrink-0 uppercase">
+                {product?.supplier?.name?.charAt(0) || 'S'}
               </div>
               <div className="flex flex-col">
                 <span className="text-sm text-gray-800">Supplier</span>
-                <span className="text-base font-medium text-gray-900 leading-tight">Guanjoi Trading LLC</span>
+                <span className="text-base font-medium text-gray-900 leading-tight">
+                  {product?.supplier?.name || 'Unknown Supplier'}
+                </span>
               </div>
             </div>
 
-            {/* Supplier Features */}
             <div className="flex flex-col gap-3 text-sm text-gray-500 mb-6">
               <div className="flex items-center gap-3">
-                <span className="text-lg leading-none w-5 text-center">🇩🇪</span>
-                Germany, Berlin
+                <span className="text-lg leading-none w-5 text-center">
+                  {/* Optional: Add a simple function to map countryCode to Emoji if you want dynamic flags */}
+                  📍 
+                </span>
+                {product?.supplier?.location || 'Location N/A'}
               </div>
-              <div className="flex items-center gap-3">
-                <ShieldCheck className="w-5 h-5 text-gray-400" />
-                Verified Seller
-              </div>
+              
+              {product?.supplier?.isVerified && (
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-gray-400" />
+                  Verified Seller
+                </div>
+              )}
+              
               <div className="flex items-center gap-3">
                 <Globe className="w-5 h-5 text-gray-400" />
-                Worldwide shipping
+                {product?.shipping?.type || 'Standard Shipping'}
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex flex-col gap-2">
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition-colors text-sm shadow-sm">
                 Send inquiry
@@ -172,7 +169,6 @@ const ProductDetail = () => {
               </button>
             </div>
 
-            {/* Save for Later Toggle */}
             <button 
               onClick={() => setIsSaved(!isSaved)}
               className="flex items-center justify-center gap-2 mt-5 text-sm font-medium transition-colors hover:text-blue-700 mx-auto"

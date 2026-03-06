@@ -1,28 +1,3 @@
-// import React from 'react'
-// import Navbar from './components/Navbar/Navbar'
-// import Footer from './components/Footer/Footer'
-
-// import Home from './pages/Home/Home'
-// import ProductListing from './pages/Products/ProductListing'
-// import PageWrapper from './pages/Products/PageWrapper'
-// import ProductPageWrapper from './pages/Product/ProductPageWrapper'
-// import CartPageWrapper from './pages/Cart/CartPageWrapper'
-
-// const App = () => {
-//   return (
-//     <>
-//     <Navbar />
-//     {/* <Home /> */}
-//     {/* <PageWrapper /> */}
-//     {/* <ProductPageWrapper /> */}
-//     <CartPageWrapper />
-//     <Footer />
-//     </>
-//   )
-// }
-
-// export default App
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -37,6 +12,7 @@ import PageWrapper from './pages/Products/PageWrapper';
 import ProductPageWrapper from './pages/Product/ProductPageWrapper';
 import CartPageWrapper from './pages/Cart/CartPageWrapper';
 import AuthPage from './pages/Auth/AuthPage';
+import Logout from './pages/Auth/Logout';
 
 const App = () => {
   return (
@@ -53,6 +29,7 @@ const App = () => {
             <Route path="/product/:id" element={<ProductPageWrapper />} />
             <Route path="/cart" element={<CartPageWrapper />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/logout" element={<Logout />} />
           </Routes>
         </main>
 

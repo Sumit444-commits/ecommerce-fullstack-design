@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from 'react';
 import { ChevronUp, ChevronDown, Star } from 'lucide-react';
 
@@ -13,14 +16,9 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
       >
         {title}
         <button className="p-1 rounded-md group-hover:bg-gray-100 transition-colors">
-          {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
-          )}
+          {isOpen ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
         </button>
       </div>
-      {/* Simple CSS transition for smooth opening/closing isn't perfectly supported by raw Tailwind without plugins, so we toggle display */}
       <div className={`${isOpen ? 'block' : 'hidden'}`}>
         {children}
       </div>
@@ -28,52 +26,33 @@ const FilterSection = ({ title, children, defaultOpen = true }) => {
   );
 };
 
-// --- Main Sidebar Component ---
-const Sidebar = ({ onFilterChange }) => {
-  // --- State Management ---
-  const [selectedBrands, setSelectedBrands] = useState(['Samsung']); // Example default
-  const [selectedFeatures, setSelectedFeatures] = useState([]);
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [condition, setCondition] = useState('Any');
-  const [selectedRatings, setSelectedRatings] = useState([]);
+// --- Main Sidebar Component (Controlled by PageWrapper) ---
+const Sidebar = ({ filters, setFilters }) => {
+  
+  // Local state ONLY for price inputs while typing, before hitting "Apply"
+  const [localPrice, setLocalPrice] = useState({ min: '', max: '' });
 
   // Mock Data Lists
-  const brandsList = ['Samsung', 'Apple', 'Huawei', 'Pocco', 'Lenovo'];
-  const featuresList = ['Metallic', 'Plastic cover', '8GB Ram', 'Super power', 'Large Memory'];
-  const conditionsList = ['Any', 'Refurbished', 'Brand new', 'Old items'];
+  const categoriesList = ['All', 'Clothing', 'Electronics', 'Wearables', 'Accessories', 'Home interiors', 'Tools, equipments', 'Sports and outdoor', 'Animal and pets', 'Computer and tech', 'Automobiles'];
+  const brandsList = ['Generic', 'TechSound', 'WearTech', 'UrbanPack', 'NordicHome', 'BuildMax', 'TrailBlaze', 'PetComfort', 'DriveSafe', 'VisionX', 'Samsung', 'Apple'];
+  const featuresList = ['Metallic', 'Plastic cover', '8GB Ram', 'Waterproof', 'Wireless'];
+  const conditionsList = ['Any', 'Brand new', 'Refurbished', 'Old items'];
 
-  // --- Handlers ---
-  const handleCheckboxChange = (item, stateList, setStateFunc) => {
-    if (stateList.includes(item)) {
-      setStateFunc(stateList.filter(i => i !== item));
-    } else {
-      setStateFunc([...stateList, item]);
-    }
-  };
-
-  const handlePriceChange = (e, type) => {
-    setPriceRange({ ...priceRange, [type]: e.target.value });
+  // --- Handlers that directly update PageWrapper's state ---
+  const handleArrayToggle = (key, item) => {
+    setFilters(prev => {
+      const currentArray = prev[key];
+      const newArray = currentArray.includes(item) 
+        ? currentArray.filter(i => i !== item) 
+        : [...currentArray, item];
+      return { ...prev, [key]: newArray };
+    });
   };
 
   const handleApplyPrice = () => {
-    console.log("Applied Price:", priceRange);
-    triggerFilterUpdate();
+    setFilters(prev => ({ ...prev, price: localPrice }));
   };
 
-  // Whenever a filter (other than price text typing) changes, you might want to alert the parent component
-  const triggerFilterUpdate = () => {
-    if (onFilterChange) {
-      onFilterChange({
-        brands: selectedBrands,
-        features: selectedFeatures,
-        price: priceRange,
-        condition,
-        ratings: selectedRatings
-      });
-    }
-  };
-
-  // Helper for rendering stars
   const renderStars = (filledCount) => (
     <div className="flex text-[#FF9017]">
       {[...Array(5)].map((_, i) => (
@@ -93,11 +72,15 @@ const Sidebar = ({ onFilterChange }) => {
       {/* 1. Category */}
       <FilterSection title="Category" defaultOpen={true}>
         <ul className="text-sm text-gray-600 space-y-3">
-          <li className="hover:text-blue-600 cursor-pointer transition-colors">Mobile accessory</li>
-          <li className="hover:text-blue-600 cursor-pointer transition-colors">Electronics</li>
-          <li className="hover:text-blue-600 cursor-pointer transition-colors">Smartphones</li>
-          <li className="hover:text-blue-600 cursor-pointer transition-colors">Modern tech</li>
-          <li className="text-blue-600 cursor-pointer mt-1 hover:underline">See all</li>
+          {categoriesList.map((cat) => (
+            <li 
+              key={cat}
+              onClick={() => setFilters(prev => ({ ...prev, category: cat }))}
+              className={`cursor-pointer transition-colors ${filters.category === cat ? 'text-blue-600 font-semibold' : 'hover:text-blue-600'}`}
+            >
+              {cat}
+            </li>
+          ))}
         </ul>
       </FilterSection>
 
@@ -108,17 +91,13 @@ const Sidebar = ({ onFilterChange }) => {
             <label key={brand} className="flex items-center gap-2 cursor-pointer w-max hover:text-gray-900 transition-colors">
               <input 
                 type="checkbox" 
-                checked={selectedBrands.includes(brand)}
-                onChange={() => {
-                  handleCheckboxChange(brand, selectedBrands, setSelectedBrands);
-                  triggerFilterUpdate();
-                }}
+                checked={filters.brands.includes(brand)}
+                onChange={() => handleArrayToggle('brands', brand)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" 
               />
               {brand}
             </label>
           ))}
-          <button className="text-blue-600 cursor-pointer mt-2 text-left hover:underline w-max">See all</button>
         </div>
       </FilterSection>
 
@@ -129,39 +108,25 @@ const Sidebar = ({ onFilterChange }) => {
             <label key={feature} className="flex items-center gap-2 cursor-pointer w-max hover:text-gray-900 transition-colors">
               <input 
                 type="checkbox" 
-                checked={selectedFeatures.includes(feature)}
-                onChange={() => {
-                  handleCheckboxChange(feature, selectedFeatures, setSelectedFeatures);
-                  triggerFilterUpdate();
-                }}
+                checked={filters.features.includes(feature)}
+                onChange={() => handleArrayToggle('features', feature)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" 
               />
               {feature}
             </label>
           ))}
-          <button className="text-blue-600 cursor-pointer mt-2 text-left hover:underline w-max">See all</button>
         </div>
       </FilterSection>
 
       {/* 4. Price Range */}
       <FilterSection title="Price range" defaultOpen={true}>
-        {/* Visual Slider */}
-        <div className="py-2 mb-4">
-          <div className="h-1 w-full bg-gray-200 rounded relative">
-            <div className="absolute left-[20%] right-[30%] h-1 bg-blue-500 rounded"></div>
-            <div className="absolute left-[20%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow cursor-pointer hover:scale-110 transition-transform"></div>
-            <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border border-gray-300 rounded-full shadow cursor-pointer hover:scale-110 transition-transform"></div>
-          </div>
-        </div>
-        
-        {/* Min/Max Inputs */}
         <div className="flex items-center gap-2 mb-3">
           <div className="flex-1">
             <label className="text-xs text-gray-500 mb-1 block">Min</label>
             <input 
               type="number" 
-              value={priceRange.min}
-              onChange={(e) => handlePriceChange(e, 'min')}
+              value={localPrice.min}
+              onChange={(e) => setLocalPrice({ ...localPrice, min: e.target.value })}
               placeholder="0" 
               className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm outline-none focus:border-blue-500 transition-colors" 
             />
@@ -170,14 +135,13 @@ const Sidebar = ({ onFilterChange }) => {
             <label className="text-xs text-gray-500 mb-1 block">Max</label>
             <input 
               type="number" 
-              value={priceRange.max}
-              onChange={(e) => handlePriceChange(e, 'max')}
-              placeholder="999999" 
+              value={localPrice.max}
+              onChange={(e) => setLocalPrice({ ...localPrice, max: e.target.value })}
+              placeholder="99999" 
               className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm outline-none focus:border-blue-500 transition-colors" 
             />
           </div>
         </div>
-        
         <button 
           onClick={handleApplyPrice}
           className="w-full bg-white border border-gray-300 text-blue-600 font-medium py-1.5 rounded-md text-sm hover:bg-gray-50 transition-colors shadow-sm active:bg-gray-100"
@@ -195,11 +159,8 @@ const Sidebar = ({ onFilterChange }) => {
                 type="radio" 
                 name="condition"
                 value={cond}
-                checked={condition === cond}
-                onChange={(e) => {
-                  setCondition(e.target.value);
-                  triggerFilterUpdate();
-                }}
+                checked={filters.condition === cond}
+                onChange={(e) => setFilters(prev => ({ ...prev, condition: e.target.value }))}
                 className="border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" 
               />
               {cond}
@@ -215,11 +176,8 @@ const Sidebar = ({ onFilterChange }) => {
             <label key={stars} className="flex items-center gap-2 cursor-pointer w-max">
               <input 
                 type="checkbox" 
-                checked={selectedRatings.includes(stars)}
-                onChange={() => {
-                  handleCheckboxChange(stars, selectedRatings, setSelectedRatings);
-                  triggerFilterUpdate();
-                }}
+                checked={filters.ratings.includes(stars)}
+                onChange={() => handleArrayToggle('ratings', stars)}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" 
               />
               {renderStars(stars)}
